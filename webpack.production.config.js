@@ -1,8 +1,7 @@
 const path = require('path');
 require('dotenv').config()
-
 const webpack = require('webpack');
-const glob = require('glob')
+const glob = require('glob');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const PurgecssPlugin = require('purgecss-webpack-plugin');
 const TerserJSPlugin = require('terser-webpack-plugin');
@@ -19,7 +18,7 @@ const PATHS = {
 
 const config = {
   entry: [
-    './main.js',    
+    './main.js',
     './assets/scss/main.scss'
   ],
   resolve: {
@@ -43,9 +42,25 @@ const config = {
       maxEntrypointSize: 512000,
       maxAssetSize: 512000
   },
-  module: {      
+  optimization: {
+    splitChunks: {
+      cacheGroups: {
+        styles: {
+          name: 'styles',
+          test: /\.css$/,
+          chunks: 'all',
+          enforce: true
+        }
+      }
+    },
+    minimizer: [
+      new TerserJSPlugin({}),
+      new OptimizeCSSAssetsPlugin({})
+    ]
+  },
+  module: {
     rules: [
-      { 
+      {
         test: /.html$/,
         loader: StringReplacePlugin.replace({
             replacements: [
@@ -57,8 +72,8 @@ const config = {
                 }
             ]
         })
-    },      
-    { 
+    },
+    {
       test: /\.js$/,
       loader: StringReplacePlugin.replace({
           replacements: [
@@ -70,7 +85,7 @@ const config = {
             }
           ]
       })
-  },      
+  },
       {
         enforce: "pre",
         test: /\.js$/,
@@ -83,17 +98,28 @@ const config = {
           'babel-loader',
         ],
         exclude: /node_modules/,
-      },      
+      },
       {
         test: /\.css$/,
         use: [
           {
-            loader: MiniCssExtractPlugin.loader,
-            options: {
-              publicPath: '../_build',
-            },
+            loader: MiniCssExtractPlugin.loader
           },
-          'css-loader',
+          { 
+            loader: 'css-loader', options: { sourceMap: false } 
+          },
+          {
+            loader: 'postcss-loader',
+            options: {
+              ident: 'postcss',
+              plugins: (loader) => [
+                require('postcss-import')({ root: loader.resourcePath }),
+                require('postcss-preset-env')(),
+                require('autoprefixer')(),
+                require('cssnano')()
+              ]
+            }
+          }
         ],
       },
       {
@@ -110,9 +136,27 @@ const config = {
               publicPath: '../',
             },
           },
-          'css-loader',
-          //'postcss-loader',
-          'sass-loader',
+          {
+            loader: 'css-loader', options: { sourceMap: false }
+          },
+          {
+            loader: 'postcss-loader',
+            options: {
+              ident: 'postcss',
+              plugins: (loader) => [
+                require('postcss-import')({ root: loader.resourcePath }),
+                require('postcss-preset-env')(),
+                require('autoprefixer')(),
+                require('cssnano')()
+              ]
+            }
+          },
+          {
+            loader: 'sass-loader',
+            query: {
+              sourceMap: false,
+            }
+          }
         ],
       },
       {
@@ -204,10 +248,8 @@ const config = {
         }
       },
     }),
-    new webpack.optimize.ModuleConcatenationPlugin(),
-    new MiniCssExtractPlugin({
-      filename: 'css/main.css',
-    }),
+    new webpack.optimize.ModuleConcatenationPlugin(),    
+    new MiniCssExtractPlugin({ filename: 'css/main.css', disable: false, allChunks: true }),
     new PurgecssPlugin({
       paths: glob.sync(`${PATHS.src}/**/*`,  { nodir: true }),
     }),
