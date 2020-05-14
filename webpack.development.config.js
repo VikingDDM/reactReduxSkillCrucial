@@ -12,13 +12,14 @@ const config = {
   entry: [
     'babel-polyfill',
     'react-hot-loader/patch',
-    'webpack-dev-server/client?http://localhost:3001',
+    'webpack-dev-server/client?http://localhost:8081',
     'webpack/hot/only-dev-server',
     './main.js',
     './assets/scss/main.scss'
   ],
   resolve: {
     alias: {
+      'react-dom': '@hot-loader/react-dom',
       d3: 'd3/index.js'
     }
   },
@@ -33,8 +34,8 @@ const config = {
     hot: true,
     contentBase: path.resolve(__dirname, 'dist/assets'),
     watchContentBase: true,
-    host: 'localhost',
-    port: 3001,
+    host: '0.0.0.0',
+    port: 8081,
 
     historyApiFallback: true,
     overlay: {
@@ -44,7 +45,7 @@ const config = {
     proxy: [
       {
         context: ['/api', '/auth', '/ws', '/js/variables.js', '/sockjs-node'],
-        target: 'http://localhost:3000',
+        target: 'http://localhost:8080',
         secure: false,
         changeOrigin: true,
         ws: true
@@ -74,12 +75,13 @@ const config = {
       {
         test: /\.js$/,
         include: path.resolve(__dirname, 'client'),
-        loaders: ['babel-loader'],
+        loaders: ['thread-loader', 'babel-loader'],
         exclude: /node_modules/
       },
       {
         test: /\.css$/,
         use: [
+          'thread-loader',
           {
             loader: MiniCssExtractPlugin.loader,
             options: {

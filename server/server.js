@@ -6,11 +6,11 @@ import bodyParser from 'body-parser'
 import sockjs from 'sockjs'
 
 import cookieParser from 'cookie-parser'
-import Html from '../client/html'
+import Html from '../dist/html'
 
 let connections = []
 
-const port = process.env.PORT || 3000
+const port = process.env.PORT || 8080
 const server = express()
 
 server.use(cors())
